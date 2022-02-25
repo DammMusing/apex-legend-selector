@@ -1,3 +1,30 @@
+<!DOCTYPE html>
 <html>
-HII
+  <head>
+    <meta charset="utf-8" />
+    <script>
+var display_width = 1280;
+var display_height = 720;
+
+var start = function() {
+  var overlay = document.getElementById('overlay');
+  if (overlay.getContext) {
+    var context = overlay.getContext('2d');
+    var background = document.getElementById('background');
+    context.drawImage(background, 0, 0, display_width, display_height);
+  } else {
+    alert('There is something wrong with the <canvas> element.');
+  }
+}
+    </script>
+  </head>
+
+  <body onload="start()">
+    <div style="display:none;">
+      <img id="background" src="img/all-legends-greyscale.png">
+    </div>
+    <canvas id="overlay" width="1280" height="720" style="border:1px solid red;">
+      Hmm... something is keeping your browser from rendering the CANVAS element.
+    </canvas>
+  </body>
 </html>
