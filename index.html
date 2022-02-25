@@ -5,13 +5,48 @@
     <script>
 var display_width = 1280;
 var display_height = 720;
+var legends = {
+  'bloodhound': null,
+  'gibraltar': null,
+  'lifeline': null,
+  'pathfinder': null,
+  'wraith': null,
+  'bangalore': null,
+  'caustic': null,
+  'mirage': null,
+  'octane': null,
+  'wattson': null,
+  'crypto': null,
+  'revenant': null,
+  'loba': null,
+  'rampart': null,
+  'horizon': null,
+  'fuse': null,
+  'valkyrie': null,
+  'seer': null,
+  'ash': null,
+  'mad-maggie': null,
+};
 
 var start = function() {
   var overlay = document.getElementById('overlay');
+  overlay.width = display_width;
+  overlay.height = display_height;
   if (overlay.getContext) {
     var context = overlay.getContext('2d');
     var background = document.getElementById('background');
     context.drawImage(background, 0, 0, display_width, display_height);
+
+    for (const [name, value] of Object.entries(legends)) {
+      if (!value) {
+        legends[name] = {
+          'img': document.getElementById(name),
+          'enabled': true,
+        };
+        context.drawImage(legends[name].img,
+            0, 0, display_width, display_height);
+      }
+    }
   } else {
     alert('There is something wrong with the <canvas> element.');
   }
@@ -19,12 +54,39 @@ var start = function() {
     </script>
   </head>
 
-  <body onload="start()">
-    <div style="display:none;">
-      <img id="background" src="img/all-legends-greyscale.png">
-    </div>
-    <canvas id="overlay" width="1280" height="720" style="border:1px solid red;">
+  <body onload="start();" style="border:0;margin:0;">
+    <canvas id="overlay" style="border:0;padding:0;">
       Hmm... something is keeping your browser from rendering the CANVAS element.
     </canvas>
+
+    <!-- prefetch the UI images -->
+    <div style="display:none;">
+      <img id="background" src="img/all-legends-greyscale.png">
+      <img id="spin" src="img/spin.png">
+
+      <img id="bloodhound" src="img/bloodhound.png">
+      <img id="gibraltar" src="img/gibraltar.png">
+      <img id="lifeline" src="img/lifeline.png">
+      <img id="pathfinder" src="img/pathfinder.png">
+      <img id="wraith" src="img/wraith.png">
+
+      <img id="bangalore" src="img/bangalore.png">
+      <img id="caustic" src="img/caustic.png">
+      <img id="mirage" src="img/mirage.png">
+      <img id="octane" src="img/octane.png">
+      <img id="wattson" src="img/wattson.png">
+
+      <img id="crypto" src="img/crypto.png">
+      <img id="revenant" src="img/revenant.png">
+      <img id="loba" src="img/loba.png">
+      <img id="rampart" src="img/rampart.png">
+      <img id="horizon" src="img/horizon.png">
+
+      <img id="fuse" src="img/fuse.png">
+      <img id="valkyrie" src="img/valkyrie.png">
+      <img id="seer" src="img/seer.png">
+      <img id="ash" src="img/ash.png">
+      <img id="mad-maggie" src="img/mad-maggie.png">
+    </div>
   </body>
 </html>
