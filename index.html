@@ -112,17 +112,31 @@ var legends = {
   },
 };
 
+var background = {
+  'img': null,
+  'enabled': false,
+};
+
+var spin = {
+  'img': null,
+  'x': 1103, 'y': 439,
+  'enabled': false,
+};
+
+const DORMANT_STATE = 1;
+const READY_STATE = 2;
+const SPINNING_STATE = 3;
+var current_state = DORMANT_STATE;
+
+
 function load_image(context, name) {
-  var img = legends[name].img = new Image();
+  var img = new Image();
   img.addEventListener('load', function() {
     context.drawImage(img, 0, 0, display_width, display_height);
     legends[name].enabled = true;
-
-    if (legends[name].x && legends[name].y) {
-      draw_blank(context, legends[name].x, legends[name].y)
-    }
   }, false);
   img.src = "img/" + name + ".png";
+  return img;
 }
 
 function draw_blank(context, x, y) {
@@ -138,11 +152,25 @@ function draw_blank(context, x, y) {
 }
 
 function test_inside(obj, x, y) {
-  // TODO
+  // TODO determine whether (x, y) is within the rhombus anchored to obj.
 }
 
 function handle_click(e) {
+  // TODO check current state, handle state transitions
   console.log("click event at (" + e.clientX + "," + e.clientY + ")");
+}
+
+function dormant_state() {
+  // TODO display nothing; click handler moves to ready_state
+}
+
+function ready_state() {
+  // TODO display "????" spin button,
+  // begin animation of displaying legends in greyscale
+}
+
+function spinning_state() {
+  // 
 }
 
 var start = function() {
@@ -156,12 +184,11 @@ var start = function() {
   overlay.addEventListener('click', handle_click, false);
 
   var context = overlay.getContext('2d');
-  var background = document.getElementById('background');
-  context.drawImage(background, 0, 0, display_width, display_height);
-
+  if (!background.img) background.img = load_image(context, 'all-legends-greyscale');
   for (const [name, value] of Object.entries(legends)) {
-    if (!value.img) load_image(context, name);
+    if (!value.img) legends[name].img = load_image(context, name);
   }
+  if (!spin.img) spin.img = load_image(context, 'spin');
 }
     </script>
   </head>
@@ -170,11 +197,5 @@ var start = function() {
     <canvas id="overlay" style="border:0;padding:0;">
       Hmm... something is keeping your browser from including the CANVAS element in the DOM.
     </canvas>
-
-    <!-- prefetch the UI images -->
-    <div style="display:none;">
-      <img id="background" src="img/all-legends-greyscale.png">
-      <!-- <img id="spin" src="img/spin.png"> -->
-    </div>
   </body>
 </html>
