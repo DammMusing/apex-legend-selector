@@ -126,8 +126,10 @@ var spin = {
 const DORMANT_STATE = 1;
 const READY_STATE = 2;
 const SPINNING_STATE = 3;
-var current_state = DORMANT_STATE;
+var current_state = 0;
 
+var canvas_dom = null;
+var canvas_context = null;
 
 function load_image(context, name) {
   var img = new Image();
@@ -151,6 +153,25 @@ function draw_blank(context, x, y) {
   context.fill();
 }
 
+// Call this when going into the dormant state.
+function all_blank(context) {
+  var coords = [];
+  for (const [name, value] of Object.entries(legends)) {
+    if (value.x && value.y) {
+      coords.push([value.x, value.y]);
+    }
+  }
+  coords.push([spin.x, spin.y]);
+  var decay = Function();
+  decay = function() {
+    if (coords.length == 0) return;
+    draw_blank(context, coords[0][0], coords[0][1]);
+    coords.shift();
+    setTimeout(decay, 25);
+  }
+  decay();
+}
+
 function test_inside(obj, x, y) {
   // TODO determine whether (x, y) is within the rhombus anchored to obj.
 }
@@ -158,10 +179,6 @@ function test_inside(obj, x, y) {
 function handle_click(e) {
   // TODO check current state, handle state transitions
   console.log("click event at (" + e.clientX + "," + e.clientY + ")");
-}
-
-function dormant_state() {
-  // TODO display nothing; click handler moves to ready_state
 }
 
 function ready_state() {
@@ -174,22 +191,25 @@ function spinning_state() {
 }
 
 var start = function() {
-  var overlay = document.getElementById('overlay');
-  if (!overlay.getContext) {
+  canvas_dom = document.getElementById('overlay');
+  if (!canvas_dom.getContext) {
     alert('There is something wrong with the <canvas> element.');
     return;
   }
-  overlay.width = display_width;
-  overlay.height = display_height;
-  overlay.addEventListener('click', handle_click, false);
+  canvas_dom.width = display_width;
+  canvas_dom.height = display_height;
+  canvas_dom.addEventListener('click', handle_click, false);
 
-  var context = overlay.getContext('2d');
-  if (!background.img) background.img = load_image(context, 'all-legends-greyscale');
+  canvas_context = canvas_dom.getContext('2d');
+  if (!background.img) background.img = load_image(canvas_context, 'all-legends-greyscale');
   for (const [name, value] of Object.entries(legends)) {
-    if (!value.img) legends[name].img = load_image(context, name);
+    if (!value.img) legends[name].img = load_image(canvas_context, name);
   }
-  if (!spin.img) spin.img = load_image(context, 'spin');
-}
+  if (!spin.img) spin.img = load_image(canvas_context, 'spin');
+
+  setTimeout(() => { all_blank(canvas_context); }, 444);
+
+};
     </script>
   </head>
 
