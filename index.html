@@ -3,56 +3,164 @@
   <head>
     <meta charset="utf-8" />
     <script>
-var display_width = 1280;
-var display_height = 720;
+const display_width = 1280;
+const display_height = 720;
+const button_width = 80;
+const button_height = 83;
+const button_dx = -46;
+
 var legends = {
-  'bloodhound': null,
-  'gibraltar': null,
-  'lifeline': null,
-  'pathfinder': null,
-  'wraith': null,
-  'bangalore': null,
-  'caustic': null,
-  'mirage': null,
-  'octane': null,
-  'wattson': null,
-  'crypto': null,
-  'revenant': null,
-  'loba': null,
-  'rampart': null,
-  'horizon': null,
-  'fuse': null,
-  'valkyrie': null,
-  'seer': null,
-  'ash': null,
-  'mad-maggie': null,
+  'bloodhound': {
+    'img': null,
+    'x': 783, 'y': 187,
+    'enabled': false,
+  },
+  'gibraltar': {
+    'img': null,
+    'x': 863, 'y': 187,
+    'enabled': false,
+  },
+  'lifeline': {
+    'img': null,
+    'x': 943, 'y': 187,
+    'enabled': false,
+  },
+  'pathfinder': {
+    'img': null,
+    'x': 1023, 'y': 187,
+    'enabled': false,
+  },
+  'wraith': {
+    'img': null,
+    'x': 1103, 'y': 187,
+    'enabled': false,
+  },
+  'bangalore': {
+    'img': null,
+    'x': 756, 'y': 271,
+    'enabled': false,
+  },
+  'caustic': {
+    'img': null,
+    'x': 836, 'y': 271,
+    'enabled': false,
+  },
+  'mirage': {
+    'img': null,
+    'x': 916, 'y': 271,
+    'enabled': false,
+  },
+  'octane': {
+    'img': null,
+    'x': 996, 'y': 271,
+    'enabled': false,
+  },
+  'wattson': {
+    'img': null,
+    'x': 1076, 'y': 271,
+    'enabled': false,
+  },
+  'crypto': {
+    'img': null,
+    'x': 729, 'y': 355,
+    'enabled': false,
+  },
+  'revenant': {
+    'img': null,
+    'x': 809, 'y': 355,
+    'enabled': false,
+  },
+  'loba': {
+    'img': null,
+    'x': 889, 'y': 355,
+    'enabled': false,
+  },
+  'rampart': {
+    'img': null,
+    'x': 969, 'y': 355,
+    'enabled': false,
+  },
+  'horizon': {
+    'img': null,
+    'x': 1049, 'y': 355,
+    'enabled': false,
+  },
+  'fuse': {
+    'img': null,
+    'x': 703, 'y': 439,
+    'enabled': false,
+  },
+  'valkyrie': {
+    'img': null,
+    'x': 783, 'y': 439,
+    'enabled': false,
+  },
+  'seer': {
+    'img': null,
+    'x': 863, 'y': 439,
+    'enabled': false,
+  },
+  'ash': {
+    'img': null,
+    'x': 943, 'y': 439,
+    'enabled': false,
+  },
+  'mad-maggie': {
+    'img': null,
+    'x': 1023, 'y': 439,
+    'enabled': false,
+  },
 };
+
+function load_image(context, name) {
+  var img = legends[name].img = new Image();
+  img.addEventListener('load', function() {
+    context.drawImage(img, 0, 0, display_width, display_height);
+    legends[name].enabled = true;
+
+    if (legends[name].x && legends[name].y) {
+      draw_blank(context, legends[name].x, legends[name].y)
+    }
+  }, false);
+  img.src = "img/" + name + ".png";
+}
+
+function draw_blank(context, x, y) {
+  context.beginPath();
+  context.moveTo(x, y);
+  context.lineTo(x+button_width, y);
+  context.lineTo(x+button_width+button_dx, y+button_height);
+  context.lineTo(x+button_dx, y+button_height);
+  context.lineTo(x, y);
+  context.closePath();
+  context.fillStyle = "#ff00ff";
+  context.fill();
+}
+
+function test_inside(obj, x, y) {
+  // TODO
+}
+
+function handle_click(e) {
+  console.log("click event at (" + e.clientX + "," + e.clientY + ")");
+}
 
 var start = function() {
   var overlay = document.getElementById('overlay');
+  if (!overlay.getContext) {
+    alert('There is something wrong with the <canvas> element.');
+    return;
+  }
   overlay.width = display_width;
   overlay.height = display_height;
-  if (overlay.getContext) {
-    var context = overlay.getContext('2d');
-    var background = document.getElementById('background');
-    context.drawImage(background, 0, 0, display_width, display_height);
+  overlay.addEventListener('click', handle_click, false);
 
-    for (const [name, value] of Object.entries(legends)) {
-      if (!value) {
-        legends[name] = {
-          'img': new Image(),
-          'enabled': false,
-        };
-        legends[name].img.addEventListener('load', function() {
-          context.drawImage(legends[name].img,
-              0, 0, display_width, display_height);
-          legends[name].enabled = true;
-        }, false);
-        legends[name].img.src = "img/" + name + ".png";
-      }
-    }
-  } else {
-    alert('There is something wrong with the <canvas> element.');
+  var context = overlay.getContext('2d');
+  var background = document.getElementById('background');
+  context.drawImage(background, 0, 0, display_width, display_height);
+
+  for (const [name, value] of Object.entries(legends)) {
+    if (!value.img) load_image(context, name);
   }
 }
     </script>
@@ -60,14 +168,13 @@ var start = function() {
 
   <body onload="start();" style="border:0;margin:0;">
     <canvas id="overlay" style="border:0;padding:0;">
-      Hmm... something is keeping your browser from rendering the CANVAS element.
+      Hmm... something is keeping your browser from including the CANVAS element in the DOM.
     </canvas>
 
     <!-- prefetch the UI images -->
     <div style="display:none;">
       <img id="background" src="img/all-legends-greyscale.png">
       <!-- <img id="spin" src="img/spin.png"> -->
-      <!-- <img id="blank" src="img/blank.png"> -->
     </div>
   </body>
 </html>
