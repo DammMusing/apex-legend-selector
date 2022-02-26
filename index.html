@@ -9,137 +9,62 @@ const button_width = 80;
 const button_height = 83;
 const button_dx = -46;
 
-var legends = {
-  'bloodhound': {
-    'img': null,
-    'x': 783, 'y': 187,
-    'enabled': false,
-  },
-  'gibraltar': {
-    'img': null,
-    'x': 863, 'y': 187,
-    'enabled': false,
-  },
-  'lifeline': {
-    'img': null,
-    'x': 943, 'y': 187,
-    'enabled': false,
-  },
-  'pathfinder': {
-    'img': null,
-    'x': 1023, 'y': 187,
-    'enabled': false,
-  },
-  'wraith': {
-    'img': null,
-    'x': 1103, 'y': 187,
-    'enabled': false,
-  },
-  'bangalore': {
-    'img': null,
-    'x': 756, 'y': 271,
-    'enabled': false,
-  },
-  'caustic': {
-    'img': null,
-    'x': 836, 'y': 271,
-    'enabled': false,
-  },
-  'mirage': {
-    'img': null,
-    'x': 916, 'y': 271,
-    'enabled': false,
-  },
-  'octane': {
-    'img': null,
-    'x': 996, 'y': 271,
-    'enabled': false,
-  },
-  'wattson': {
-    'img': null,
-    'x': 1076, 'y': 271,
-    'enabled': false,
-  },
-  'crypto': {
-    'img': null,
-    'x': 729, 'y': 355,
-    'enabled': false,
-  },
-  'revenant': {
-    'img': null,
-    'x': 809, 'y': 355,
-    'enabled': false,
-  },
-  'loba': {
-    'img': null,
-    'x': 889, 'y': 355,
-    'enabled': false,
-  },
-  'rampart': {
-    'img': null,
-    'x': 969, 'y': 355,
-    'enabled': false,
-  },
-  'horizon': {
-    'img': null,
-    'x': 1049, 'y': 355,
-    'enabled': false,
-  },
-  'fuse': {
-    'img': null,
-    'x': 703, 'y': 439,
-    'enabled': false,
-  },
-  'valkyrie': {
-    'img': null,
-    'x': 783, 'y': 439,
-    'enabled': false,
-  },
-  'seer': {
-    'img': null,
-    'x': 863, 'y': 439,
-    'enabled': false,
-  },
-  'ash': {
-    'img': null,
-    'x': 943, 'y': 439,
-    'enabled': false,
-  },
-  'mad-maggie': {
-    'img': null,
-    'x': 1023, 'y': 439,
-    'enabled': false,
-  },
-};
+var canvas_dom = null;
+var canvas_context = null;
 
-var background = {
-  'img': null,
-  'enabled': false,
-};
+function load_image(path, onload) {
+  var img = new Image();
+  if (onload) 
+    img.addEventListener('load', onload.bind(img), false);
+  img.src = path;
+  return img;
+}
 
-var spin = {
-  'img': null,
-  'x': 1103, 'y': 439,
-  'enabled': false,
-};
+var Button = function(name, x, y) {
+  return {
+    'img': null,
+    'name': name,
+    'x': x,
+    'y': y,
+    'enabled': false,
+    'load': function(context) {
+      var path = "img/" + this.name + ".png";
+      this.img = load_image(path, function() {
+        canvas_context.drawImage(this, 0, 0, display_width, display_height);
+      });
+    }
+  };
+}
+
+var legends = [
+  new Button('bloodhound', 783, 187),
+  new Button('gibraltar', 863, 187),
+  new Button('lifeline', 943, 187),
+  new Button('pathfinder', 1023, 187),
+  new Button('wraith', 1103, 187),
+  new Button('bangalore', 756, 271),
+  new Button('caustic', 836, 271),
+  new Button('mirage', 916, 271),
+  new Button('octane', 996, 271),
+  new Button('wattson', 1076, 271),
+  new Button('crypto', 729, 355),
+  new Button('revenant', 809, 355),
+  new Button('loba', 889, 355),
+  new Button('rampart', 969, 355),
+  new Button('horizon', 1049, 355),
+  new Button('fuse', 703, 439),
+  new Button('valkyrie', 783, 439),
+  new Button('seer', 863, 439),
+  new Button('ash', 943, 439),
+  new Button('mad-maggie', 1023, 439),
+];
+
+var spin = new Button('spin', 1103, 439);
 
 const DORMANT_STATE = 1;
 const READY_STATE = 2;
 const SPINNING_STATE = 3;
 var current_state = 0;
-
-var canvas_dom = null;
-var canvas_context = null;
-
-function load_image(context, name) {
-  var img = new Image();
-  img.addEventListener('load', function() {
-    context.drawImage(img, 0, 0, display_width, display_height);
-    legends[name].enabled = true;
-  }, false);
-  img.src = "img/" + name + ".png";
-  return img;
-}
 
 function draw_blank(context, x, y) {
   context.beginPath();
@@ -162,8 +87,8 @@ function all_blank(context) {
     }
   }
   coords.push([spin.x, spin.y]);
-  var decay = Function();
-  decay = function() {
+
+  var decay = function() {
     if (coords.length == 0) return;
     draw_blank(context, coords[0][0], coords[0][1]);
     coords.shift();
@@ -201,11 +126,14 @@ var start = function() {
   canvas_dom.addEventListener('click', handle_click, false);
 
   canvas_context = canvas_dom.getContext('2d');
-  if (!background.img) background.img = load_image(canvas_context, 'all-legends-greyscale');
-  for (const [name, value] of Object.entries(legends)) {
-    if (!value.img) legends[name].img = load_image(canvas_context, name);
+  if (!background.img) {
+    background.img = document.getElementById("background");
+    canvas_context.drawImage(background.img, 0, 0, display_width, display_height);
   }
-  if (!spin.img) spin.img = load_image(canvas_context, 'spin');
+  for (const [name, value] of Object.entries(legends)) {
+    if (!value.img) legends[name].img = legends[name].load();
+  }
+  if (!spin.img) spin.load();
 
   setTimeout(() => { all_blank(canvas_context); }, 444);
 
@@ -217,5 +145,8 @@ var start = function() {
     <canvas id="overlay" style="border:0;padding:0;">
       Hmm... something is keeping your browser from including the CANVAS element in the DOM.
     </canvas>
+    <div style="display:none">  <!-- prefetch some images -->
+      <img id="background" src="img/all-legends-greyscale.png">
+    </div>
   </body>
 </html>
