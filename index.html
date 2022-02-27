@@ -30,8 +30,8 @@ var Button = function(name, x, y) {
     'load': function(context) {
       var path = "img/" + this.name + ".png";
       this.img = load_image(path, function() {
-        canvas_context.drawImage(this, 0, 0, display_width, display_height);
-      });
+        this.enabled = true;
+      }.bind(this));
     }
   };
 }
@@ -60,6 +60,9 @@ var legends = [
 ];
 
 var spin = new Button('spin', 1103, 439);
+var spinning = [];
+var spin_time = 0;
+var spin_delta = 0;
 
 const DORMANT_STATE = 1;
 const READY_STATE = 2;
@@ -78,44 +81,162 @@ function draw_blank(context, x, y) {
   context.fill();
 }
 
-// Call this when going into the dormant state.
-function all_blank(context) {
-  var coords = [];
-  for (const [name, value] of Object.entries(legends)) {
-    if (value.x && value.y) {
-      coords.push([value.x, value.y]);
-    }
+function message(text) {
+  document.getElementById("message").innerHTML = "<h3>" + text + "</h3>";
+}
+
+// Make all buttons go blank and hide all buttons.
+function go_dormant() {
+  var queue = [];
+  for (const legend of legends) {
+    queue.push(legend);
   }
-  coords.push([spin.x, spin.y]);
+  queue.push(spin);
+  spin_time = 0;
+  spin_delta = 0;
 
   var decay = function() {
-    if (coords.length == 0) return;
-    draw_blank(context, coords[0][0], coords[0][1]);
-    coords.shift();
-    setTimeout(decay, 25);
+    if (queue.length == 0) {
+      current_state = DORMANT_STATE;
+      return;
+    }
+    queue[0].enabled = false;
+    queue.shift();
+    setTimeout(decay, 20);
   }
   decay();
 }
 
 function test_inside(obj, x, y) {
-  // TODO determine whether (x, y) is within the rhombus anchored to obj.
+  if ((y < obj.y) || (y > (obj.y + button_height)))
+    return false;
+  var lerp = (y - obj.y) / button_height;
+  var x_min = obj.x + (button_dx * lerp);
+  var x_max = x_min + button_width;
+  if (x >= x_min && x <= x_max)
+    return true;
+  return false;
+}
+
+function check_collision(x, y) {
+  if (test_inside(spin, x, y)) {
+    return spin;
+  }
+  for (const legend of legends) {
+    if (test_inside(legend, x, y)) {
+      return legend;
+    }
+  }
+  return null;
+}
+
+function choose_from(available) {
+  if (!available || available.length == 0) {
+    return [];
+  }
+
+  var sequence = [];
+  for (let step = 0; step < 42; step++) {
+    var next = Math.floor(Math.random() * available.length);
+    if (available[next] == sequence[sequence.length-1]) {
+      step--;
+      continue;
+    }
+    sequence.push(available[next]);
+  }
+  return sequence;
 }
 
 function handle_click(e) {
-  // TODO check current state, handle state transitions
-  console.log("click event at (" + e.clientX + "," + e.clientY + ")");
+  if (current_state == DORMANT_STATE) {
+    for (const button of legends) {
+      button.enabled = true;
+    }
+    spin.enabled = true;
+    current_state = READY_STATE;
+  } else if (current_state == READY_STATE) {
+    var button = check_collision(e.pageX, e.pageY);
+    if (!button) {
+      // Nothing was pressed, return to dormant.
+      go_dormant();
+    } else if (button == spin) {
+      // Set up the spin! ignore disabled legends.
+      var enabled_legends = [];
+      for (const legend of legends) {
+        if (legend.enabled) enabled_legends.push(legend);
+      }
+      spinning = choose_from(enabled_legends);
+      if (spinning.length == 0) {
+        message("nothing to choose from! 😆");
+        go_dormant();
+        return;
+      }
+      
+      message(spinning[0].name.toUpperCase());  // display chosen legend
+      spin.enabled = false;
+      spin_delta = 7;
+      current_state = SPINNING_STATE;
+    } else {
+      // One of the legend buttons was clicked, disable/enable it.
+      button.enabled = !button.enabled;
+      if (button.enabled) {
+        message("enabled " + button.name);
+      } else {
+        message("disabled " + button.name);
+      }
+    }
+  } else if (current_state == SPINNING_STATE) {
+    // Clicks shouldn't do anything unless it affects the result of the current spin.
+    var button = check_collision(e.pageX, e.pageY);
+    if (button && button == spinning[0]) {
+      spinning.shift();
+      message(spinning[0].name.toUpperCase());
+    }
+  }
 }
 
-function ready_state() {
-  // TODO display "????" spin button,
-  // begin animation of displaying legends in greyscale
+var render = function(timestamp) {
+  if (background.img)
+    // we always render the background, then draw over it as necessary.
+    canvas_context.drawImage(background.img, 0, 0, display_width, display_height);
+
+  for (const legend of legends) {
+    if (legend.img) {
+      if (legend.enabled) {
+        if (current_state != SPINNING_STATE)
+          canvas_context.drawImage(legend.img, 0, 0, display_width, display_height);
+      } else {
+        draw_blank(canvas_context, legend.x, legend.y);
+      }
+    }
+  }
+  if (spin.img) {
+    if (spin.enabled) {
+      canvas_context.drawImage(spin.img, 0, 0, display_width, display_height);
+    } else {
+      draw_blank(canvas_context, spin.x, spin.y);
+    }
+  }
+
+  if (current_state == SPINNING_STATE) {
+    // check if we're past the next changeover time, if so move forward.
+    var legend = spinning[spinning.length-1];
+    canvas_context.drawImage(legend.img, 0, 0, display_width, display_height);
+    if (spinning.length > 1 && timestamp > spin_time) {
+      spinning.pop();
+      if (spinning.length == 1) {
+        // Done showing the spin animation, pause for a second and then go dormant.
+        setTimeout(go_dormant, 1400);
+      }
+      spin_delta = spin_delta * 1.1;
+      spin_time = timestamp + spin_delta;
+    }
+  }
+
+  requestAnimationFrame(render);
 }
 
-function spinning_state() {
-  // 
-}
-
-var start = function() {
+function start() {
   canvas_dom = document.getElementById('overlay');
   if (!canvas_dom.getContext) {
     alert('There is something wrong with the <canvas> element.');
@@ -128,16 +249,14 @@ var start = function() {
   canvas_context = canvas_dom.getContext('2d');
   if (!background.img) {
     background.img = document.getElementById("background");
-    canvas_context.drawImage(background.img, 0, 0, display_width, display_height);
   }
-  for (const [name, value] of Object.entries(legends)) {
-    if (!value.img) legends[name].img = legends[name].load();
+  for (const legend of legends) {
+    if (!legend.img) legend.load();
   }
   if (!spin.img) spin.load();
-
-  setTimeout(() => { all_blank(canvas_context); }, 444);
-
-};
+  setTimeout(go_dormant, 444);
+  requestAnimationFrame(render);
+}
     </script>
   </head>
 
@@ -145,6 +264,7 @@ var start = function() {
     <canvas id="overlay" style="border:0;padding:0;">
       Hmm... something is keeping your browser from including the CANVAS element in the DOM.
     </canvas>
+    <div id="message" style="padding-left: 25px;"></div>
     <div style="display:none">  <!-- prefetch some images -->
       <img id="background" src="img/all-legends-greyscale.png">
     </div>
