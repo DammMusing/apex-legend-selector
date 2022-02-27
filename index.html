@@ -197,8 +197,7 @@ function handle_click(e) {
   }
 }
 
-var render = function() {
-  timestamp = new Date().valueOf();
+var render = function(timestamp) {
   if (background.img)
     // we always render the background, then draw over it as necessary.
     canvas_context.drawImage(background.img, 0, 0, display_width, display_height);
@@ -235,6 +234,8 @@ var render = function() {
       spin_time = timestamp + spin_delta;
     }
   }
+
+  requestAnimationFrame(render);
 }
 
 function start() {
@@ -256,7 +257,7 @@ function start() {
   }
   if (!spin.img) spin.load();
   setTimeout(() => {go_dormant(); message("Click anywhere to bring the interface up.")}, 444);
-  setInterval(render, 1000.0/30);
+  requestAnimationFrame(render);
 }
     </script>
   </head>
