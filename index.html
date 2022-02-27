@@ -190,6 +190,7 @@ function handle_click(e) {
     // Clicks shouldn't do anything unless it affects the result of the current spin.
     var button = check_collision(e.pageX, e.pageY);
     if (button && button == spinning[0]) {
+      button.enabled = false;
       spinning.shift();
       message(spinning[0].name.toUpperCase());
     }
