@@ -256,7 +256,7 @@ function start() {
     if (!legend.img) legend.load();
   }
   if (!spin.img) spin.load();
-  setTimeout(go_dormant, 444);
+  setTimeout(() => {go_dormant(); message("Click anywhere to bring the interface up.")}, 444);
   requestAnimationFrame(render);
 }
     </script>
@@ -266,9 +266,10 @@ function start() {
     <canvas id="overlay" style="border:0;padding:0;">
       Hmm... something is keeping your browser from including the CANVAS element in the DOM.
     </canvas>
-    <div id="message" style="padding-left: 25px;"></div>
+    <div id="message" style="padding-left: 25px;height: 2.5em;"></div>
     <div style="display:none">  <!-- prefetch some images -->
       <img id="background" src="img/all-legends-greyscale.png">
     </div>
+    <p>Chroma-keyed to #FF00FF and at 720p resolution for adding as an OBS source (above the game capture).</p>
   </body>
 </html>
